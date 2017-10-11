@@ -33,7 +33,11 @@ class SymconAlarmanlage extends IPSModule {
 			$this->CreateDummyByIdent(IPS_GetParent($this->InstanceID), "Sensors", "Sensors");
 			$this->CreateDummyByIdent(IPS_GetParent($this->InstanceID), "Targets", "Alert Target");
 			
-			$vid = $this->CreateVariableByIdent($this->InstanceID, "Active", "Automatik", 0, "Switch", true);
+			$this->CreateVariableByIdent($this->InstanceID, "Active", "Automatik", 0, "Switch", true);
+			$this->EnableAction("Active");
+
+			$this->CreateIntervalProfile("Seconds");
+			$this->CreateVariableByIdent($this->InstanceID, "TimerInterval", "Meldungen Interval", 1, "Seconds", true);
 			$this->EnableAction("Active");
 
 			$vid = $this->CreateVariableByIdent($this->InstanceID, "Alert", "Alert", 0, "Switch", true);
@@ -189,7 +193,14 @@ class SymconAlarmanlage extends IPSModule {
             $tid = $this->CreateTimerByIdent($this->InstanceID, "AlertSpamTimer", "Alert Timer");
             IPS_SetEventActive($tid, $value);
 		}
-    }
+	}
+	
+	private function SetTimer($value) {
+		SetValue($this->GetIDForIdent("TimerInterval"), $value);
+
+		$tid = IPS_GetObjectIDByIdent("AlertSpamTimer", $this->InstanceID);
+		IPS_SetEventCyclic($tid, 0 /* Keine Datumsüberprüfung */, 0, 0, 2, 1 /* Sekündlich */ , $value /* Alle $value Sekunden */);
+	}
 
 	public function RequestAction($Ident, $Value) {
 		
@@ -205,7 +216,10 @@ class SymconAlarmanlage extends IPSModule {
                 break;
             case "notificationActive":
                 $this->NotificationTimer($Value);
-                break;
+				break;
+			case "TimerInterval":
+				$this->SetTimer($value);
+				break;
 			default:
 				throw new Exception("Invalid ident");
 		}
@@ -360,6 +374,16 @@ class SymconAlarmanlage extends IPSModule {
 		}
 		
 		return $GUID;
+	}
+
+	private function CreateIntervalProfile($name)
+	{
+		if(!IPS_VariableProfileExists($name))
+		{
+			IPS_CreateVariableProfile(1 /*int*/);
+			IPS_SetVariableProfileText($name, "", "s");
+			IPS_SetVariableProfileValues($name, 0, 240, 0);
+		}
 	}
 }
 ?>
