@@ -260,7 +260,7 @@ class SymconAlarmanlage extends IPSModule {
 		 $eid = @IPS_GetObjectIDByIdent($ident, $id);
 		 if($eid === false)
 		 {
-			 $eid = IPS_CreateEvent(1);
+			 $eid = IPS_CreateEvent(0);
 			 IPS_SetParent($eid, $id);
 			 IPS_SetName($eid, $name);
 			 IPS_SetIdent($eid, $ident);
