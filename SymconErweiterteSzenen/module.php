@@ -241,10 +241,12 @@ class SymconAlarmanlage extends IPSModule {
 			 IPS_SetName($tid, $name);
 			 IPS_SetIdent($tid, $ident);
 			 $WebFrontInsIDs = $this->GetModuleIDByName("WebFront Configurator");
+			 $currentName = IPS_GetName($this->InstanceID);
+			 $currentID = $this->InstanceID;
 			 $script = "";
 			 foreach($WebFrontInsIDs as $insID)
 			{
-				$script .= "WFC_PushNotification($insID, 'Alarm', 'Der alarm für ". IPS_GetName($this->InstanceID) . "(." $this->InstanceID .") wurde ausgelößt', '', 0); ";
+				$script .= "WFC_PushNotification($insID, 'Alarm', 'Der alarm für $currentName ($currentID) wurde ausgelößt', '', 0); ";
 			}
 			 IPS_SetEventScript($tid, $script);
 			 IPS_SetEventCyclic($tid, 0 /* Keine Datumsüberprüfung */, 0, 0, 2, 1 /* Sekündlich */ , 5 /* Alle 5 Sekunden */);
@@ -262,7 +264,8 @@ class SymconAlarmanlage extends IPSModule {
 			 IPS_SetParent($eid, $id);
 			 IPS_SetName($eid, $name);
 			 IPS_SetIdent($eid, $ident);
-			 $script = "$id = IPS_GetObjectIDByIdent('AlertSpamTimer', ". $this->InstanceID .");\n";
+			 $currentID = $this->InstanceID;
+			 $script = "$id = IPS_GetObjectIDByIdent('AlertSpamTimer', $currentID);\n";
 			 $script .= "if(GetValue($target)) IPS_SetEventActive($id, true); else IPS_SetEventActive($id, false);"
 			 IPS_SetEventScript($eid, $script);
 			 IPS_SetEventTrigger($eid, 1, $target);
