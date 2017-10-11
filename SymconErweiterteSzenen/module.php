@@ -52,7 +52,7 @@ class SymconAlarmanlage extends IPSModule {
 						IPS_SetName($eid, "Trigger for #".$linkVariableID);
 						IPS_SetIdent($eid, "Sensor".$sensorID);
 						IPS_SetEventTrigger($eid, 0, $linkVariableID);
-						IPS_SetEventScript($eid, "ARM_TriggerAlert(\$_IPS['TARGET'], \$_IPS['VARIABLE'], \$_IPS['VALUE']);");
+						IPS_SetEventScript($eid, "SA_TriggerAlert(\$_IPS['TARGET'], \$_IPS['VARIABLE'], \$_IPS['VALUE']);");
 						IPS_SetEventActive($eid, true);
 					}
 				}
