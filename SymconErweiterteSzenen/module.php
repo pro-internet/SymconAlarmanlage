@@ -270,7 +270,7 @@ class SymconAlarmanlage extends IPSModule {
 		 return $cid;
     }
 	
-	private function CreateVariableByIdent($id, $ident, $name, $type, $profile = "", $enableLogging = false, $icon = '') {
+	private function CreateVariableByIdent($id, $ident, $name, $type, $profile = "", $enableLogging = false, $icon = '', $pos) {
 		
 		 $vid = @IPS_GetObjectIDByIdent($ident, $id);
 		 if($vid === false)
@@ -280,6 +280,7 @@ class SymconAlarmanlage extends IPSModule {
 			 IPS_SetName($vid, $name);
 			 IPS_SetIdent($vid, $ident);
 			 IPS_SetIcon($vid, $icon);
+			 IPS_SetPosition($pos);
 			 if($profile != "")
                 IPS_SetVariableCustomProfile($vid, $profile);
             if($enableLogging)
