@@ -37,7 +37,7 @@ class SymconAlarmanlage extends IPSModule {
         $vid = $this->CreateVariableByIdent($this->InstanceID, "Alert", "Alert", 0, "Switch", true);
         $this->EnableAction("Alert");
         $this->CreateTriggerByIdent($this->InstanceID, "AlertOnChange", "Alert.OnChange", $vid);
-        $this->CreateTriggerByIdent($this->InstanceID, "AlertOnTrue", "Alert.OnTrue", $vid, 3 /*specific value*/, true);
+        $this->CreateTriggerByIdent($this->InstanceID, "AlertOnTrue", "Alert.OnTrue", $vid, 4 /*specific value*/, true);
         
         $this->CreateVariableByIdent($this->InstanceID, "mailActive", "E-mail aktivieren", 0, "Switch", false);
         $this->EnableAction("mailActive");
@@ -151,10 +151,11 @@ class SymconAlarmanlage extends IPSModule {
 			}
 		}
         
-        $notificationActive = GetValue(IPS_GetObjectIDByIdent("notificationActive", $this->InstaceID));
+        $notificationActive = GetValue(IPS_GetObjectIDByIdent("notificationActive", $this->InstanceID));
         //Send a notificatin message to the configured WebFront
 		if($Status && $notificationActive)
 		{
+			IPS_LogMessage("Alarm", "Notifications enabled");
 			$tid = $this->CreateTimerByIdent($this->InstanceID, "AlertSpamTimer", "Alert Timer");
 			IPS_SetEventActive($tid, true);
 			$statusMsg = "true";
@@ -178,11 +179,13 @@ class SymconAlarmanlage extends IPSModule {
     
     private function NotificationTimer($value)
     {
-        if(!$value)
+		SetValue($this->GetIDForIdent("notificationActive"), $value);
+
+        if($value === false)
         {
             $tid = $this->CreateTimerByIdent($this->InstanceID, "AlertSpamTimer", "Alert Timer");
             IPS_SetEventActive($tid, $value);
-        }
+		}
     }
 
 	public function RequestAction($Ident, $Value) {
@@ -195,7 +198,7 @@ class SymconAlarmanlage extends IPSModule {
 				$this->SetAlert($Value);
                 break;
             case "mailActive":
-                IPS_LogMessage("SymconMeldungen", "Mailservice aktiv");
+				SetValue($this->GetIDForIdent("mailActive"), $Value);
                 break;
             case "notificationActive":
                 $this->NotificationTimer($Value);
@@ -282,8 +285,16 @@ class SymconAlarmanlage extends IPSModule {
 			 $WebFrontInsIDs = $this->GetModuleIDByName("WebFront Configurator");
 			 $currentName = IPS_GetName($this->InstanceID);
 			 $currentID = $this->InstanceID;
-             $WebFrontID = $this->ReadPropertyInteger("wfc");
-			 $script = "WFC_PushNotification($WebFrontID, 'Alarm', 'Der alarm für $currentName ($currentID) wurde ausgelößt', '', 0); ";
+			 $WebFrontID = $this->ReadPropertyInteger("wfc");
+			 $script = "\$sensorLinks = IPS_GetObjectIDByIdent('Sensors', ". IPS_GetParent($this->InstanceID) .");\n";
+			 $script .= "foreach(IPS_GetChildrenIDs(\$sensorLinks) as \$c) {\n";
+			 $script .= "\$sensorVal = GetValue(IPS_GetLink(\$c)['TargetID']);\n";
+			 $script .= "if(\$sensorVal === true) {\n";
+			 $script .= "\$sensor = \$c; break;\n";
+			 $script .= "}\n";
+			 $script .= "}\n";
+			 $script .= "\$subject = \"Alarmanlage: \" . IPS_GetName(\$sensor) . \", (\" .  date(\"m.d.y\") . \" um \" . date(\"H:i:s\") .\")\";\n";
+			 $script .= "WFC_PushNotification($WebFrontID, 'Alarm', \$subject, '', 0); ";
 			 IPS_SetEventScript($tid, $script);
 			 IPS_SetEventCyclic($tid, 0 /* Keine Datumsüberprüfung */, 0, 0, 2, 1 /* Sekündlich */ , 5 /* Alle 5 Sekunden */);
              IPS_SetEventActive($tid, false);
@@ -304,21 +315,21 @@ class SymconAlarmanlage extends IPSModule {
              if($ident == "AlertOnChange")
              {
                 $script = "\$id = IPS_GetObjectIDByIdent('AlertSpamTimer', $id);\n";
-                $script .= "if(GetValue($target)) IPS_SetEventActive(\$id, true); else IPS_SetEventActive(\$id, false);";         
+                $script .= "if(GetValue($target) === false) IPS_SetEventActive(\$id, false);";         
              }
              else if($ident == "AlertOnTrue")
              {
                 $script = "\$mailActive = GetValue(IPS_GetObjectIDByIdent('mailActive', ".$this->InstanceID."));\n";
-                $script .= "if(IPS_GetProperty(". $this->InstanceID ."'mail') > 9999 && \$mailActive) {\n";
+                $script .= "if(IPS_GetProperty(". $this->InstanceID .", 'mail') > 9999 && \$mailActive) {\n";
                 $script .= "\$sensorLinks = IPS_GetObjectIDByIdent('Sensors', ". IPS_GetParent($this->InstanceID) .");\n";
                 $script .= "foreach(IPS_GetChildrenIDs(\$sensorLinks) as \$c) {\n";
-                $script .= "\$sensorVal = GetValue(IPS_GetLink(\$c)['TargetID'])\n";
+                $script .= "\$sensorVal = GetValue(IPS_GetLink(\$c)['TargetID']);\n";
                 $script .= "if(\$sensorVal === true) {\n";
                 $script .= "\$sensor = \$c; break;\n";
                 $script .= "}\n";
                 $script .= "}\n";
-                $script .= "\$subject = \"Alarmanlage: \" . IPS_GetName(\$sensor) . \", \" .  date(\"m.d.y\") . \" um \" . date(\"H:i:s\");\n";
-                $script .= "SMTP_SendMail(IPS_GetProperty(". $this->InstanceID ."'mail'), \$subject, \$subject);\n";
+                $script .= "\$subject = \"Alarmanlage: \" . IPS_GetName(\$sensor) . \", (\" .  date(\"m.d.y\") . \" um \" . date(\"H:i:s\") .\")\";\n";
+                $script .= "SMTP_SendMail(IPS_GetProperty(". $this->InstanceID .", 'mail'), \$subject, \$subject);\n";
                 $script .= "}";    
              }
 			 IPS_SetEventScript($eid, $script);
