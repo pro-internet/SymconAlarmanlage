@@ -280,7 +280,7 @@ class SymconAlarmanlage extends IPSModule {
 			 IPS_SetName($vid, $name);
 			 IPS_SetIdent($vid, $ident);
 			 IPS_SetIcon($vid, $icon);
-			 IPS_SetPosition($pos);
+			 IPS_SetPosition($vid, $pos);
 			 if($profile != "")
                 IPS_SetVariableCustomProfile($vid, $profile);
             if($enableLogging)
