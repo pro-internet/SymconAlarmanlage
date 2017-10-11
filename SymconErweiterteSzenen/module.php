@@ -11,6 +11,10 @@ class SymconAlarmanlage extends IPSModule {
 		//Never delete this line!
 		parent::Create();
 
+		if(@$this->RegisterPropertyInteger("mail") !== false)
+		{
+			$this->RegisterPropertyInteger("mail", 0);
+		}
 	}
 
 	public function Destroy() {
