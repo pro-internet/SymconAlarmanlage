@@ -2,6 +2,7 @@
   "elements":
   [
 	{ "type": "SelectInstance", "name": "mail", "caption": "E-mail Instanz" },
+	{ "type": "Label", "label": "Auf Update klicken, sobald alle Sensor-Links hinzugefügt wurden" },
 	{ "type": "Button", "label": "Update", "onClick": "SA_UpdateEvents($id);" }
   ]
 }
