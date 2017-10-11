@@ -71,12 +71,12 @@ class SymconAlarmanlage extends IPSModule {
 		switch($this->GetProfileName(IPS_GetVariable($SourceID))) {
 			case "~Window.Hoppe":
 				if($SourceValue == 0 || $SourceValue == 2) {
-					$this->SetAlert(true);
+					$this->SetAlert(true, $SourceID, $SourceValue);
 				}
 				break;
 			case "~Window.HM":
 				if($SourceValue == 1 || $SourceValue == 2) {
-					$this->SetAlert(true);
+					$this->SetAlert(true, $SourceID, $SourceValue);
 				}
 				break;
 			case "~Lock.Reversed":
@@ -84,19 +84,19 @@ class SymconAlarmanlage extends IPSModule {
 			case "~Presence.Reversed":
 			case "~Window.Reversed":
 				if(!$SourceValue) {
-					$this->SetAlert(true);
+					$this->SetAlert(true, $SourceID, $SourceValue);
 				}
 				break;
 			default:
 				if($SourceValue) {
-					$this->SetAlert(true);
+					$this->SetAlert(true, $SourceID, $SourceValue);
 				}
 				break;
 		}
 
 	}
 
-	public function SetAlert(bool $Status) {
+	public function SetAlert(bool $Status, int $SourceID = null, int $SourceValue = null) {
 		
 		$targetsID = $this->CreateCategoryByIdent($this->InstanceID, "Targets", "Alert Target");
 		
@@ -138,7 +138,14 @@ class SymconAlarmanlage extends IPSModule {
 		}
 		
 		SetValue($this->GetIDForIdent("Alert"), $Status);
-	
+
+		//Send an e-mail to the recipient about the Alert
+		if($this->ReadPropertyInteger("mail") > 9999)
+		{
+			$subject = "Der Alarm für " . IPS_GetName($this->InstanceID) . "(". $this->InstanceID .") wurde ausgelöst";
+			$message = "Der auslöser war " . IPS_GetName($SourceID) . "(" . $SourceID . ") mit dem Wert " . $SourceValue . ". Es wurde am " . date("m.d.y") . " um " . date("H:i:s") . " ausgelöst.";
+			SMTP_SendMail($this->ReadPropertyInteger("mail"), $subject, $message);
+		}
 	}
 	
 
