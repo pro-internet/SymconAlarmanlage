@@ -30,25 +30,25 @@ class SymconAlarmanlage extends IPSModule {
 
 		if(IPS_GetParent($this->InstanceID) != 0)
 		{
-			$this->CreateDummyByIdent(IPS_GetParent($this->InstanceID), "Sensors", "Sensors");
-			$this->CreateDummyByIdent(IPS_GetParent($this->InstanceID), "Targets", "Alert Target");
+			$this->CreateDummyByIdent(IPS_GetParent($this->InstanceID), "Sensors", "Sensoren");
+			$this->CreateDummyByIdent(IPS_GetParent($this->InstanceID), "Targets", "Alarm Targets", "Warning");
 			
 			$this->CreateVariableByIdent($this->InstanceID, "Active", "Automatik", 0, "Switch", true);
 			$this->EnableAction("Active");
 
 			$this->CreateIntervalProfile("Seconds");
-			$this->CreateVariableByIdent($this->InstanceID, "TimerInterval", "Meldungen Interval", 1, "Seconds", true);
+			$this->CreateVariableByIdent($this->InstanceID, "TimerInterval", "Benachrichtigungen Interval", 1, "Seconds", true, "Clock");
 			$this->EnableAction("Active");
 
-			$vid = $this->CreateVariableByIdent($this->InstanceID, "Alert", "Alert", 0, "Switch", true);
+			$vid = $this->CreateVariableByIdent($this->InstanceID, "Alert", "Status", 0, "Switch", true);
 			$this->EnableAction("Alert");
 			$this->CreateTriggerByIdent($this->InstanceID, "AlertOnChange", "Alert.OnChange", $vid);
 			$this->CreateTriggerByIdent($this->InstanceID, "AlertOnTrue", "Alert.OnTrue", $vid, 4 /*specific value*/, true);
 			
-			$this->CreateVariableByIdent($this->InstanceID, "mailActive", "E-mail aktivieren", 0, "Switch", false);
+			$this->CreateVariableByIdent($this->InstanceID, "mailActive", "E-Mail Benachrichtigung", 0, "Switch", true);
 			$this->EnableAction("mailActive");
 
-			$this->CreateVariableByIdent($this->InstanceID, "notificationActive", "Benachrichtigungen aktivieren", 0, "Switch", false);
+			$this->CreateVariableByIdent($this->InstanceID, "notificationActive", "Push Benachrichtigung", 0, "Switch", true);
 			$this->EnableAction("notificationActive");
 			
 			$this->CreateTimerByIdent($this->InstanceID, "AlertSpamTimer", "Alert Timer");
@@ -255,7 +255,7 @@ class SymconAlarmanlage extends IPSModule {
 		 return $cid;
     }
     
-    private function CreateDummyByIdent($id, $ident, $name) {
+    private function CreateDummyByIdent($id, $ident, $name, $icon = "") {
 		
 		 $cid = @IPS_GetObjectIDByIdent($ident, $id);
 		 if($cid === false)
@@ -265,11 +265,12 @@ class SymconAlarmanlage extends IPSModule {
 			 IPS_SetParent($cid, $id);
 			 IPS_SetName($cid, $name);
 			 IPS_SetIdent($cid, $ident);
+			 IPS_SetIcon($cid, $icon);
 		 }
 		 return $cid;
     }
 	
-	private function CreateVariableByIdent($id, $ident, $name, $type, $profile = "", $enableLogging = false) {
+	private function CreateVariableByIdent($id, $ident, $name, $type, $profile = "", $enableLogging = false, $icon = '') {
 		
 		 $vid = @IPS_GetObjectIDByIdent($ident, $id);
 		 if($vid === false)
@@ -278,6 +279,7 @@ class SymconAlarmanlage extends IPSModule {
 			 IPS_SetParent($vid, $id);
 			 IPS_SetName($vid, $name);
 			 IPS_SetIdent($vid, $ident);
+			 IPS_SetIcon($vid, $icon);
 			 if($profile != "")
                 IPS_SetVariableCustomProfile($vid, $profile);
             if($enableLogging)
