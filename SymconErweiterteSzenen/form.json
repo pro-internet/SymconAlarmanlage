@@ -1,0 +1,7 @@
+{
+  "elements":
+  [
+	{ "type": "SelectInstance", "name": "mail", "caption": "E-mail Instanz" },
+	{ "type": "Button", "label": "Update", "onClick": "SA_UpdateEvents($id);" }
+  ]
+}

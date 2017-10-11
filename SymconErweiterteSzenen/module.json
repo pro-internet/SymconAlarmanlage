@@ -1,0 +1,14 @@
+{
+    "id": "{D0C180F9-2718-4F70-BCC4-A1376CDD4CB5}",
+    "name": "SymconAlarmanlage",
+    "type": 3,
+    "vendor": "prointernet",
+    "aliases": 
+    [
+        "SymconAlarmanlage"
+    ],
+    "parentRequirements": [],
+    "childRequirements": [],
+    "implemented": [],
+    "prefix": "SA"
+}
