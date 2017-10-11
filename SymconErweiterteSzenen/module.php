@@ -266,7 +266,7 @@ class SymconAlarmanlage extends IPSModule {
 			 IPS_SetIdent($eid, $ident);
 			 $currentID = $this->InstanceID;
 			 $script = "$id = IPS_GetObjectIDByIdent('AlertSpamTimer', $currentID);\n";
-			 $script .= "if(GetValue($target)) IPS_SetEventActive($id, true); else IPS_SetEventActive($id, false);"
+			 $script .= "if(GetValue($target)) IPS_SetEventActive($id, true); else IPS_SetEventActive($id, false);";
 			 IPS_SetEventScript($eid, $script);
 			 IPS_SetEventTrigger($eid, 1, $target);
 			 IPS_SetEventActive($eid, false);
