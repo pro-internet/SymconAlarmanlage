@@ -13,7 +13,8 @@ class SymconAlarmanlage extends IPSModule {
 
 		if(@$this->RegisterPropertyInteger("mail") !== false)
 		{
-			$this->RegisterPropertyInteger("mail", 0);
+            $this->RegisterPropertyInteger("mail", 0);
+            $this->RegisterPropertyInteger("wfc", 0);
 		}
 	}
 
@@ -291,11 +292,8 @@ class SymconAlarmanlage extends IPSModule {
 			 $WebFrontInsIDs = $this->GetModuleIDByName("WebFront Configurator");
 			 $currentName = IPS_GetName($this->InstanceID);
 			 $currentID = $this->InstanceID;
-			 $script = "";
-			 foreach($WebFrontInsIDs as $insID)
-			{
-				$script .= "WFC_PushNotification($insID, 'Alarm', 'Der alarm für $currentName ($currentID) wurde ausgelößt', '', 0); ";
-			}
+             $WebFrontID = $this->ReadPropertyInteger("wfc");
+			 $script = "WFC_PushNotification($WebFrontID, 'Alarm', 'Der alarm für $currentName ($currentID) wurde ausgelößt', '', 0); ";
 			 IPS_SetEventScript($tid, $script);
 			 IPS_SetEventCyclic($tid, 0 /* Keine Datumsüberprüfung */, 0, 0, 2, 1 /* Sekündlich */ , 5 /* Alle 5 Sekunden */);
              IPS_SetEventActive($tid, false);
