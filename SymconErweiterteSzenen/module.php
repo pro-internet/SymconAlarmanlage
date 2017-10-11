@@ -30,6 +30,8 @@ class SymconAlarmanlage extends IPSModule {
 
 		if(IPS_GetParent($this->InstanceID) != 0)
 		{
+			$svs = $this->CreateSetValueScript();
+
 			$this->CreateDummyByIdent(IPS_GetParent($this->InstanceID), "Sensors", "Sensoren");
 			$this->CreateDummyByIdent(IPS_GetParent($this->InstanceID), "Targets", "Alarm Targets", "Warning");
 			
@@ -51,8 +53,7 @@ class SymconAlarmanlage extends IPSModule {
 			$this->CreateVariableByIdent($this->InstanceID, "notificationActive", "Push Benachrichtigung", 0, "Switch", true, '', -2);
 			$this->EnableAction("notificationActive");
 			
-			$this->CreateTimerByIdent($this->InstanceID, "AlertSpamTimer", "Alert Timer");
-		}
+			$this->CreateTimerByIdent($this->InstanceID, "AlertSpamTimer", "Alert Timer");}
 	}
 
 	public function UpdateEvents() {
@@ -196,8 +197,6 @@ class SymconAlarmanlage extends IPSModule {
 	}
 	
 	private function SetTimer($value) {
-		SetValue($this->GetIDForIdent("TimerInterval"), $value);
-
 		$tid = IPS_GetObjectIDByIdent("AlertSpamTimer", $this->InstanceID);
 		IPS_SetEventCyclic($tid, 0 /* Keine Datumsüberprüfung */, 0, 0, 2, 1 /* Sekündlich */ , $value /* Alle $value Sekunden */);
 	}
@@ -216,9 +215,6 @@ class SymconAlarmanlage extends IPSModule {
                 break;
             case "notificationActive":
                 $this->NotificationTimer($Value);
-				break;
-			case "TimerInterval":
-				$this->SetTimer($value);
 				break;
 			default:
 				throw new Exception("Invalid ident");
@@ -242,20 +238,7 @@ class SymconAlarmanlage extends IPSModule {
 			return $variable['VariableAction'];
 	}
 	
-	private function CreateCategoryByIdent($id, $ident, $name) {
-		
-		 $cid = @IPS_GetObjectIDByIdent($ident, $id);
-		 if($cid === false)
-		 {
-			 $cid = IPS_CreateCategory();
-			 IPS_SetParent($cid, $id);
-			 IPS_SetName($cid, $name);
-			 IPS_SetIdent($cid, $ident);
-		 }
-		 return $cid;
-    }
-    
-    private function CreateDummyByIdent($id, $ident, $name, $icon = "") {
+	private function CreateDummyByIdent($id, $ident, $name, $icon = "") {
 		
 		 $cid = @IPS_GetObjectIDByIdent($ident, $id);
 		 if($cid === false)
@@ -266,6 +249,20 @@ class SymconAlarmanlage extends IPSModule {
 			 IPS_SetName($cid, $name);
 			 IPS_SetIdent($cid, $ident);
 			 IPS_SetIcon($cid, $icon);
+		 }
+		 return $cid;
+    }
+    
+    private function CreateDummyByIdent($id, $ident, $name) {
+		
+		 $cid = @IPS_GetObjectIDByIdent($ident, $id);
+		 if($cid === false)
+		 {
+             $dummyGUID = $this->GetModuleIDByName();
+			 $cid = IPS_CreateInstance($dummyGUID);
+			 IPS_SetParent($cid, $id);
+			 IPS_SetName($cid, $name);
+			 IPS_SetIdent($cid, $ident);
 		 }
 		 return $cid;
     }
@@ -317,7 +314,7 @@ class SymconAlarmanlage extends IPSModule {
 			 $script .= "\$sensor = \$c; break;\n";
 			 $script .= "}\n";
 			 $script .= "}\n";
-			 $script .= "\$subject = \"Alarmanlage: \" . IPS_GetName(\$sensor) . \", (\" .  date(\"m.d.y\") . \" um \" . date(\"H:i:s\") .\")\";\n";
+			 $script .= "\$subject = \"Alarmanlage: \" . IPS_GetName(\$sensor) . \" (\" .  date(\"m.d.y\") . \" um \" . date(\"H:i:s\") .\")\";\n";
 			 $script .= "WFC_PushNotification($WebFrontID, 'Alarm', \$subject, '', 0); ";
 			 IPS_SetEventScript($tid, $script);
 			 IPS_SetEventCyclic($tid, 0 /* Keine Datumsüberprüfung */, 0, 0, 2, 1 /* Sekündlich */ , 30 /* Alle 30 Sekunden */);
@@ -352,7 +349,7 @@ class SymconAlarmanlage extends IPSModule {
                 $script .= "\$sensor = \$c; break;\n";
                 $script .= "}\n";
                 $script .= "}\n";
-                $script .= "\$subject = \"Alarmanlage: \" . IPS_GetName(\$sensor) . \", (\" .  date(\"m.d.y\") . \" um \" . date(\"H:i:s\") .\")\";\n";
+                $script .= "\$subject = \"Alarmanlage: \" . IPS_GetName(\$sensor) . \" (\" .  date(\"m.d.y\") . \" um \" . date(\"H:i:s\") .\")\";\n";
                 $script .= "SMTP_SendMail(IPS_GetProperty(". $this->InstanceID .", 'mail'), \$subject, \$subject);\n";
                 $script .= "}";    
              }
@@ -387,10 +384,32 @@ class SymconAlarmanlage extends IPSModule {
 	{
 		if(!IPS_VariableProfileExists($name))
 		{
-			IPS_CreateVariableProfile(1 /*int*/);
+			IPS_CreateVariableProfile($name, 1 /*int*/);
 			IPS_SetVariableProfileText($name, "", "s");
-			IPS_SetVariableProfileValues($name, 0, 240, 0);
+			IPS_SetVariableProfileValues($name, 0, 240, 1);
 		}
+	}
+
+	private function CreateSetValueScript()
+	{
+		$svs = @IPS_GetObjectIDByIdent("SetValueScript", $this->InstanceID);
+		if($svs === false)
+		{
+			$svs = IPS_CreateScript(0);
+			IPS_SetScriptContent($svs, "<?
+SetValue(\$_IPS['VARIABLE'], \$_IPS['VALUE']);
+
+\$tid = IPS_GetObjectIDByIdent(\"AlertSpamTimer\",". $this->InstanceID .");
+IPS_SetEventCyclic(\$tid, 0 /* Keine Datumsüberprüfung */, 0, 0, 2, 1 /* Sekündlich */ , \$_IPS['VALUE']);
+
+?>");
+			IPS_SetName($svs, "SetValue");
+			IPS_SetParent($svs, $this->InstanceID);
+			IPS_SetPosition($svs, 9999);
+			IPS_SetIdent($svs, "SetValueScript");
+			IPS_SetHidden($svs, true);
+		}
+		return $svs;
 	}
 }
 ?>
