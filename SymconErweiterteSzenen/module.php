@@ -33,22 +33,22 @@ class SymconAlarmanlage extends IPSModule {
 			$this->CreateDummyByIdent(IPS_GetParent($this->InstanceID), "Sensors", "Sensoren");
 			$this->CreateDummyByIdent(IPS_GetParent($this->InstanceID), "Targets", "Alarm Targets", "Warning");
 			
-			$this->CreateVariableByIdent($this->InstanceID, "Active", "Automatik", 0, "Switch", true);
+			$this->CreateVariableByIdent($this->InstanceID, "Active", "Automatik", 0, "Switch", true, '', -5);
 			$this->EnableAction("Active");
 
 			$this->CreateIntervalProfile("Seconds");
-			$this->CreateVariableByIdent($this->InstanceID, "TimerInterval", "Benachrichtigungen Interval", 1, "Seconds", true, "Clock");
+			$this->CreateVariableByIdent($this->InstanceID, "TimerInterval", "Benachrichtigungen Interval", 1, "Seconds", true, "Clock", -1);
 			$this->EnableAction("Active");
 
-			$vid = $this->CreateVariableByIdent($this->InstanceID, "Alert", "Status", 0, "Switch", true);
+			$vid = $this->CreateVariableByIdent($this->InstanceID, "Alert", "Status", 0, "Switch", true, '', -4);
 			$this->EnableAction("Alert");
 			$this->CreateTriggerByIdent($this->InstanceID, "AlertOnChange", "Alert.OnChange", $vid);
 			$this->CreateTriggerByIdent($this->InstanceID, "AlertOnTrue", "Alert.OnTrue", $vid, 4 /*specific value*/, true);
 			
-			$this->CreateVariableByIdent($this->InstanceID, "mailActive", "E-Mail Benachrichtigung", 0, "Switch", true);
+			$this->CreateVariableByIdent($this->InstanceID, "mailActive", "E-Mail Benachrichtigung", 0, "Switch", true, '', -3);
 			$this->EnableAction("mailActive");
 
-			$this->CreateVariableByIdent($this->InstanceID, "notificationActive", "Push Benachrichtigung", 0, "Switch", true);
+			$this->CreateVariableByIdent($this->InstanceID, "notificationActive", "Push Benachrichtigung", 0, "Switch", true, '', -2);
 			$this->EnableAction("notificationActive");
 			
 			$this->CreateTimerByIdent($this->InstanceID, "AlertSpamTimer", "Alert Timer");
