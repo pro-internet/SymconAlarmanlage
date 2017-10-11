@@ -37,7 +37,7 @@ class SymconAlarmanlage extends IPSModule {
 			$this->EnableAction("Active");
 
 			$this->CreateIntervalProfile("Seconds");
-		$this->CreateVariableByIdent($this->InstanceID, "TimerInterval", "Benachrichtigungen Interval", 1, "Seconds", true, "Clock", -1, 30 /*init val*/);
+		$this->CreateVariableByIdent($this->InstanceID, "TimerInterval", "Benachrichtigung Interval", 1, "Seconds", true, "Clock", -1, 30 /*init val*/);
 			$this->EnableAction("Active");
 
 			$vid = $this->CreateVariableByIdent($this->InstanceID, "Alert", "Status", 0, "Switch", true, '', -4);
