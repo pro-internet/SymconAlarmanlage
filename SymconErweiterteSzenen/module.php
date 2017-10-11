@@ -130,11 +130,13 @@ class SymconAlarmanlage extends IPSModule {
 					} else {
 						$actionValue = $Status;
 					}
-
+					
 					if(IPS_InstanceExists($actionID)) {
 						IPS_RequestAction($actionID, $o['ObjectIdent'], $actionValue);
 					} else if(IPS_ScriptExists($actionID)) {
 						echo IPS_RunScriptWaitEx($actionID, Array("VARIABLE" => $linkVariableID, "VALUE" => $actionValue));
+					} else if($actionID < 10000 && GetValue($linkVariableID) != $actionValue) {
+						SetValue($linkVariableID, $actionValue);
 					}
 				}
 			}
