@@ -137,11 +137,13 @@ class SymconAlarmanlage extends IPSModule {
 			}
 		}
 		
+		IPS_LogMessage("SymconAlarmanlage", "Der alarm wurde auf $Status gesetzt");
 		SetValue($this->GetIDForIdent("Alert"), $Status);
-
+		
 		//Send an e-mail to the recipient about the Alert
 		if($this->ReadPropertyInteger("mail") > 9999)
 		{
+			IPS_LogMessage("SymconAlarmanlage", "Sending mail to address specified in Linked SMTP Instance (" . $this->ReadPropertyInteger("mail") . ")");
 			$subject = "Der Alarm für " . IPS_GetName($this->InstanceID) . "(". $this->InstanceID .") wurde ausgelöst";
 			$message = "Der auslöser war " . IPS_GetName($SourceID) . "(" . $SourceID . ") mit dem Wert " . $SourceValue . ". Es wurde am " . date("m.d.y") . " um " . date("H:i:s") . " ausgelöst.";
 			SMTP_SendMail($this->ReadPropertyInteger("mail"), $subject, $message);
