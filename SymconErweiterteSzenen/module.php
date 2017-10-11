@@ -37,7 +37,7 @@ class SymconAlarmanlage extends IPSModule {
 			$this->EnableAction("Active");
 
 			$this->CreateIntervalProfile("Seconds");
-			$this->CreateVariableByIdent($this->InstanceID, "TimerInterval", "Benachrichtigungen Interval", 1, "Seconds", true, "Clock", -1);
+		$this->CreateVariableByIdent($this->InstanceID, "TimerInterval", "Benachrichtigungen Interval", 1, "Seconds", true, "Clock", -1, 30 /*init val*/);
 			$this->EnableAction("Active");
 
 			$vid = $this->CreateVariableByIdent($this->InstanceID, "Alert", "Status", 0, "Switch", true, '', -4);
@@ -270,7 +270,7 @@ class SymconAlarmanlage extends IPSModule {
 		 return $cid;
     }
 	
-	private function CreateVariableByIdent($id, $ident, $name, $type, $profile = "", $enableLogging = false, $icon = '', $pos) {
+	private function CreateVariableByIdent($id, $ident, $name, $type, $profile = "", $enableLogging = false, $icon = '', $pos = 0, $initVal = 0) {
 		
 		 $vid = @IPS_GetObjectIDByIdent($ident, $id);
 		 if($vid === false)
@@ -288,7 +288,11 @@ class SymconAlarmanlage extends IPSModule {
                 $archivGUID = $this->GetModuleIDByName("Archive Control");
                 $archivIDs = (array) IPS_GetInstanceListByModuleID($archivGUID);
                 AC_SetLoggingStatus($archivIDs[0], $vid, true);
-            }
+			}
+			if($initVal != 0)
+			{
+				SetValue($vid, $initVal);
+			}
 		 }
 		 return $vid;
 	}
