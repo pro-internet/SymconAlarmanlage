@@ -32,8 +32,11 @@ class SymconAlarmanlage extends IPSModule {
 		
 		$this->CreateVariableByIdent($this->InstanceID, "Active", "Active", 0, "~Switch");
 		$this->EnableAction("Active");
-		$this->CreateVariableByIdent($this->InstanceID, "Alert", "Alert", 0, "~Alert");
+		$vid = $this->CreateVariableByIdent($this->InstanceID, "Alert", "Alert", 0, "~Alert");
 		$this->EnableAction("Alert");
+		$this->CreateTriggerByIdent($this->InstanceID, "AlertOnChange", "Alert.OnChange", $vid);
+		
+		$this->CreateTimerByIdent($this->InstanceID, "AlertSpamTimer", "Alert Timer");
 	}
 
 	public function UpdateEvents() {
@@ -137,11 +140,19 @@ class SymconAlarmanlage extends IPSModule {
 			}
 		}
 		
-		IPS_LogMessage("SymconAlarmanlage", "Der alarm wurde auf $Status gesetzt");
+		if($Status)
+		{
+			$tid = $this->CreateTimerByIdent($this->InstanceID, "AlertSpamTimer", "Alert Timer");
+			IPS_SetEventActive($tid, true);
+			$statusMsg = "true";
+		}
+		else
+			$statusMsg = "false";
+		IPS_LogMessage("SymconAlarmanlage", "Der alarm wurde auf ". $statusMsg ." gesetzt");
 		SetValue($this->GetIDForIdent("Alert"), $Status);
 		
 		//Send an e-mail to the recipient about the Alert
-		if($this->ReadPropertyInteger("mail") > 9999)
+		if($this->ReadPropertyInteger("mail") > 9999 && $Status)
 		{
 			IPS_LogMessage("SymconAlarmanlage", "Sending mail to address specified in Linked SMTP Instance (" . $this->ReadPropertyInteger("mail") . ")");
 			$subject = "Der Alarm für " . IPS_GetName($this->InstanceID) . "(". $this->InstanceID .") wurde ausgelöst";
@@ -218,6 +229,63 @@ class SymconAlarmanlage extends IPSModule {
 				IPS_SetVariableCustomProfile($vid, $profile);
 		 }
 		 return $vid;
+	}
+	
+	private function CreateTimerByIdent($id, $ident, $name) {
+		
+		 $tid = @IPS_GetObjectIDByIdent($ident, $id);
+		 if($tid === false)
+		 {
+			 $tid = IPS_CreateEvent(1);
+			 IPS_SetParent($tid, $id);
+			 IPS_SetName($tid, $name);
+			 IPS_SetIdent($tid, $ident);
+			 $WebFrontInsIDs = $this->GetModuleIDByName("WebFront Configurator");
+			 $script = "";
+			 foreach($WebFrontInsIDs as $insID)
+			{
+				$script .= "WFC_PushNotification($insID, 'Alarm', 'Der alarm für ". IPS_GetName($this->InstanceID) . "(." $this->InstanceID .") wurde ausgelößt', '', 0); ";
+			}
+			 IPS_SetEventScript($tid, $script);
+			 IPS_SetEventCyclic($tid, 0 /* Keine Datumsüberprüfung */, 0, 0, 2, 1 /* Sekündlich */ , 5 /* Alle 5 Sekunden */);
+			 IPS_SetEventActive($tid, false);
+		 }
+		 return $tid;
+	}
+
+	private function CreateTriggerByIdent($id, $ident, $name, $target) {
+		
+		 $eid = @IPS_GetObjectIDByIdent($ident, $id);
+		 if($eid === false)
+		 {
+			 $eid = IPS_CreateEvent(1);
+			 IPS_SetParent($eid, $id);
+			 IPS_SetName($eid, $name);
+			 IPS_SetIdent($eid, $ident);
+			 $script = "$id = IPS_GetObjectIDByIdent('AlertSpamTimer', ". $this->InstanceID .");\n";
+			 $script .= "if(GetValue($target)) IPS_SetEventActive($id, true); else IPS_SetEventActive($id, false);"
+			 IPS_SetEventScript($eid, $script);
+			 IPS_SetEventTrigger($eid, 1, $target);
+			 IPS_SetEventActive($eid, false);
+		 }
+		 return $eid;
+	}
+	
+	private function GetModuleIDByName($name = "Dummy Module")
+	{
+		$moduleList = IPS_GetModuleList();
+		$GUID = ""; //init
+		foreach($moduleList as $l)
+		{
+			if(IPS_GetModule($l)['ModuleName'] == $name)
+			{
+				$GUID = $l;
+				break;
+			}
+		}
+		
+		$insIDs = (array) IPS_GetInstanceListByModuleID($GUID);
+		return $insIDs;
 	}
 }
 ?>
