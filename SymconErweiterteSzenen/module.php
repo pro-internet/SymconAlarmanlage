@@ -151,7 +151,7 @@ class SymconAlarmanlage extends IPSModule {
 			}
 		}
         
-        $notificationActive = GetValue(IPS_GetObjectIDByIdent($this->InstaceID, "notificationActive"));
+        $notificationActive = GetValue(IPS_GetObjectIDByIdent("notificationActive", $this->InstaceID));
         //Send a notificatin message to the configured WebFront
 		if($Status && $notificationActive)
 		{
@@ -163,16 +163,6 @@ class SymconAlarmanlage extends IPSModule {
 			$statusMsg = "false";
 		IPS_LogMessage("SymconAlarmanlage", "Der alarm wurde auf ". $statusMsg ." gesetzt");
 		SetValue($this->GetIDForIdent("Alert"), $Status);
-        
-        $mailActive = GetValue(IPS_GetObjectIDByIdent($this->InstanceID, "mailActive"));
-		//Send an e-mail to the recipient about the Alert
-		if($this->ReadPropertyInteger("mail") > 9999 && $Status && $mailActive)
-		{
-			IPS_LogMessage("SymconAlarmanlage", "Sending mail to address specified in Linked SMTP Instance (" . $this->ReadPropertyInteger("mail") . ")");
-			$subject = "Der Alarm für " . IPS_GetName($this->InstanceID) . "(". $this->InstanceID .") wurde ausgelöst";
-			$message = "Der auslöser war " . IPS_GetName($SourceID) . "(" . $SourceID . ") mit dem Wert " . $SourceValue . ". Es wurde am " . date("m.d.y") . " um " . date("H:i:s") . " ausgelöst.";
-			SMTP_SendMail($this->ReadPropertyInteger("mail"), $subject, $message);
-		}
 	}
 	
 
