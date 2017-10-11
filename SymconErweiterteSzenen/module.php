@@ -252,20 +252,6 @@ class SymconAlarmanlage extends IPSModule {
 		 }
 		 return $cid;
     }
-    
-    private function CreateDummyByIdent($id, $ident, $name) {
-		
-		 $cid = @IPS_GetObjectIDByIdent($ident, $id);
-		 if($cid === false)
-		 {
-             $dummyGUID = $this->GetModuleIDByName();
-			 $cid = IPS_CreateInstance($dummyGUID);
-			 IPS_SetParent($cid, $id);
-			 IPS_SetName($cid, $name);
-			 IPS_SetIdent($cid, $ident);
-		 }
-		 return $cid;
-    }
 	
 	private function CreateVariableByIdent($id, $ident, $name, $type, $profile = "", $enableLogging = false, $icon = '', $pos = 0, $initVal = 0) {
 		
