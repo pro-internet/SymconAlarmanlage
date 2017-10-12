@@ -32,8 +32,8 @@ class SymconAlarmanlage extends IPSModule {
 		{
 			$svs = $this->CreateSetValueScript();
 
-			$this->CreateDummyByIdent(IPS_GetParent($this->InstanceID), "Sensors", "Sensoren");
-			$this->CreateDummyByIdent(IPS_GetParent($this->InstanceID), "Targets", "Alarm Targets", "Warning");
+			$this->CreateDummyByIdent(IPS_GetParent($this->InstanceID), "Sensors", "Sensoren", '', 20);
+			$this->CreateDummyByIdent(IPS_GetParent($this->InstanceID), "Targets", "Alarm Targets", "Warning", 30);
 			
 			$this->CreateVariableByIdent($this->InstanceID, "Active", "Automatik", 0, "Switch", true, '', -5);
 			$this->EnableAction("Active");
@@ -242,7 +242,7 @@ class SymconAlarmanlage extends IPSModule {
 			return $variable['VariableAction'];
 	}
 	
-	private function CreateDummyByIdent($id, $ident, $name, $icon = "") {
+	private function CreateDummyByIdent($id, $ident, $name, $icon = "", $pos = 0) {
 		
 		 $cid = @IPS_GetObjectIDByIdent($ident, $id);
 		 if($cid === false)
@@ -253,6 +253,7 @@ class SymconAlarmanlage extends IPSModule {
 			 IPS_SetName($cid, $name);
 			 IPS_SetIdent($cid, $ident);
 			 IPS_SetIcon($cid, $icon);
+			 IPS_SetPosition($cid, $pos);
 		 }
 		 return $cid;
     }
