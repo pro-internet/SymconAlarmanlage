@@ -72,11 +72,19 @@ class SymconAlarmanlage extends IPSModule {
 						IPS_SetIdent($eid, "Sensor".$sensorID);
 						IPS_SetEventTrigger($eid, 1, $linkVariableID);
 						IPS_SetEventScript($eid, "SA_TriggerAlert(\$_IPS['TARGET'], \$_IPS['VARIABLE'], \$_IPS['VALUE']);\n
+												  
 												  if(GetValue($linkVariableID) !== false && GetValue(IPS_GetObjectIDByIdent(\"mailActive\", ".$this->InstanceID.")) === true)\n
 												  { 
 													\$subject = \"". IPS_GetName($this->InstanceID) .": \" . IPS_GetName($linkVariableID) . \" (\" .  date(\"m.d.y\") . \" um \" . date(\"H:i:s\") .\")\";\n
 													SMTP_SendMail(IPS_GetProperty(". $this->InstanceID .", 'mail'), \$subject, \$subject);\n
-												  }");
+												  }
+
+												  if(GetValue($linkVariableID) !== false && GetValue(IPS_GetObjectIDByIdent(\"notificationActive\", ".$this->InstanceID.")) === true)\n
+												  { 
+													\$subject = \"". IPS_GetName($this->InstanceID) .": \" . IPS_GetName($linkVariableID) . \" (\" .  date(\"m.d.y\") . \" um \" . date(\"H:i:s\") .\")\";\n
+													WFC_PushNotification(IPS_GetProperty(". $this->InstanceID .", 'wfc'), 'Alarm', \$subject, '', 0);\n
+												  }
+												 ");
 						IPS_SetEventActive($eid, true);
 					}
 				}
@@ -162,10 +170,10 @@ class SymconAlarmanlage extends IPSModule {
 				}
 			}
 		}
-        
-        $notificationActive = GetValue(IPS_GetObjectIDByIdent("notificationActive", $this->InstanceID));
+		
+		$interval = GetValue(IPS_GetObjectIDByIdent('TimerInterval', $this->InstanceID));
         //Send a notificatin message to the configured WebFront
-		if($Status && $notificationActive)
+		if($Status && $interval != 0)
 		{
 			IPS_LogMessage("Alarm", "Notifications enabled");
 			$tid = $this->CreateTimerByIdent($this->InstanceID, "AlertSpamTimer", "Alert Timer");
@@ -302,18 +310,7 @@ class SymconAlarmanlage extends IPSModule {
 			 $currentName = IPS_GetName($this->InstanceID);
 			 $currentID = $this->InstanceID;
 			 $WebFrontID = $this->ReadPropertyInteger("wfc");
-			 $script = "\$sensorLinks = IPS_GetObjectIDByIdent('Sensors', ". IPS_GetParent($this->InstanceID) .");\n";
-			 $script .= "foreach(IPS_GetChildrenIDs(\$sensorLinks) as \$c) {\n";
-			 $script .= "\$sensorVal = GetValue(IPS_GetLink(\$c)['TargetID']);\n";
-			 $script .= "if(\$sensorVal === true) {\n";
-			 $script .= "\$sensor = \$c; break;\n";
-			 $script .= "}\n";
-			 $script .= "}\n";
-			 $script .= "if(\$sensor != 0)\n";
-			 $script .= "\$subject = \"". IPS_GetName($this->InstanceID) .": \" . IPS_GetName(\$sensor) . \" (\" .  date(\"m.d.y\") . \" um \" . date(\"H:i:s\") .\")\";\n";
-			 $script .= "else\n";
-			 $script .= "\$subject = \"". IPS_GetName($this->InstanceID) .": \" . \" Alarm \" . \" (\" .  date(\"m.d.y\") . \" um \" . date(\"H:i:s\") .\")\";\n";
-			 $script .= "WFC_PushNotification($WebFrontID, 'Alarm', \$subject, '', 0); ";
+			 $script = "WFC_PushNotification($WebFrontID, 'Alarm', '', '', 0); ";
 			 IPS_SetEventScript($tid, $script);
 			 IPS_SetEventCyclic($tid, 0 /* Keine Datumsüberprüfung */, 0, 0, 2, 1 /* Sekündlich */ , 30 /* Alle 30 Sekunden */);
              IPS_SetEventActive($tid, false);
@@ -382,9 +379,16 @@ class SymconAlarmanlage extends IPSModule {
 			IPS_SetScriptContent($svs, "<?
 SetValue(\$_IPS['VARIABLE'], \$_IPS['VALUE']);
 
-\$tid = IPS_GetObjectIDByIdent(\"AlertSpamTimer\",". $this->InstanceID .");
-IPS_SetEventCyclic(\$tid, 0 /* Keine Datumsüberprüfung */, 0, 0, 2, 1 /* Sekündlich */ , \$_IPS['VALUE']);
-
+if(\$_IPS['VALUE'] > 0)
+{
+	\$tid = IPS_GetObjectIDByIdent(\"AlertSpamTimer\",". $this->InstanceID .");
+	IPS_SetEventCyclic(\$tid, 0 /* Keine Datumsüberprüfung */, 0, 0, 2, 1 /* Sekündlich */ , \$_IPS['VALUE']);
+}
+else
+{
+	\$tid = IPS_GetObjectIDByIdent(\"AlertSpamTimer\",". $this->InstanceID .");
+	IPS_SetEventActive(\$tid, false);
+}
 ?>");
 			IPS_SetName($svs, "SetValue");
 			IPS_SetParent($svs, $this->InstanceID);
