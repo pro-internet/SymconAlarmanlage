@@ -42,10 +42,9 @@ class SymconAlarmanlage extends IPSModule {
 		$this->CreateVariableByIdent($this->InstanceID, "TimerInterval", "Benachrichtigung Interval", 1, "Seconds", true, "Clock", -1, 30 /*init val*/, $svs);
 			$this->EnableAction("Active");
 
-			$vid = $this->CreateVariableByIdent($this->InstanceID, "Alert", "Status", 0, "Switch", true, '', -4);
+			$vid = $this->CreateVariableByIdent($this->InstanceID, "Alert", "Alarm", 0, "Switch", true, '', -4);
 			$this->EnableAction("Alert");
 			$this->CreateTriggerByIdent($this->InstanceID, "AlertOnChange", "Alert.OnChange", $vid);
-			$this->CreateTriggerByIdent($this->InstanceID, "AlertOnTrue", "Alert.OnTrue", $vid, 4 /*specific value*/, true);
 			
 			$this->CreateVariableByIdent($this->InstanceID, "mailActive", "E-Mail Benachrichtigung", 0, "Switch", true, '', -3);
 			$this->EnableAction("mailActive");
@@ -71,8 +70,13 @@ class SymconAlarmanlage extends IPSModule {
 						IPS_SetParent($eid, $this->InstanceID);
 						IPS_SetName($eid, "Trigger for #".$linkVariableID);
 						IPS_SetIdent($eid, "Sensor".$sensorID);
-						IPS_SetEventTrigger($eid, 0, $linkVariableID);
-						IPS_SetEventScript($eid, "SA_TriggerAlert(\$_IPS['TARGET'], \$_IPS['VARIABLE'], \$_IPS['VALUE']);");
+						IPS_SetEventTrigger($eid, 1, $linkVariableID);
+						IPS_SetEventScript($eid, "SA_TriggerAlert(\$_IPS['TARGET'], \$_IPS['VARIABLE'], \$_IPS['VALUE']);\n
+												  if(GetValue($linkVariableID) !== false && GetValue(IPS_GetObjectIDByIdent(\"mailActive\", ".$this->InstanceID.")) === true)\n
+												  { 
+													\$subject = \"". IPS_GetName($this->InstanceID) .": \" . IPS_GetName($linkVariableID) . \" (\" .  date(\"m.d.y\") . \" um \" . date(\"H:i:s\") .\")\";\n
+													SMTP_SendMail(IPS_GetProperty(". $this->InstanceID .", 'mail'), \$subject, \$subject);\n
+												  }");
 						IPS_SetEventActive($eid, true);
 					}
 				}
@@ -260,7 +264,6 @@ class SymconAlarmanlage extends IPSModule {
 		 {
 			 $vid = IPS_CreateVariable($type);
 			 IPS_SetParent($vid, $id);
-			 IPS_SetName($vid, $name);
 			 IPS_SetIdent($vid, $ident);
 			 IPS_SetIcon($vid, $icon);
 			 IPS_SetPosition($vid, $pos);
@@ -281,6 +284,7 @@ class SymconAlarmanlage extends IPSModule {
 				SetValue($vid, $initVal);
 			}
 		 }
+		 IPS_SetName($vid, $name);
 		 return $vid;
 	}
 	
@@ -304,7 +308,10 @@ class SymconAlarmanlage extends IPSModule {
 			 $script .= "\$sensor = \$c; break;\n";
 			 $script .= "}\n";
 			 $script .= "}\n";
-			 $script .= "\$subject = \"Alarmanlage: \" . IPS_GetName(\$sensor) . \" (\" .  date(\"m.d.y\") . \" um \" . date(\"H:i:s\") .\")\";\n";
+			 $script .= "if(\$sensor != 0)\n";
+			 $script .= "\$subject = \"". IPS_GetName($this->InstanceID) .": \" . IPS_GetName(\$sensor) . \" (\" .  date(\"m.d.y\") . \" um \" . date(\"H:i:s\") .\")\";\n";
+			 $script .= "else\n";
+			 $script .= "\$subject = \"". IPS_GetName($this->InstanceID) .": \" . \" Alarm \" . \" (\" .  date(\"m.d.y\") . \" um \" . date(\"H:i:s\") .\")\";\n";
 			 $script .= "WFC_PushNotification($WebFrontID, 'Alarm', \$subject, '', 0); ";
 			 IPS_SetEventScript($tid, $script);
 			 IPS_SetEventCyclic($tid, 0 /* Keine Datumsüberprüfung */, 0, 0, 2, 1 /* Sekündlich */ , 30 /* Alle 30 Sekunden */);
@@ -326,22 +333,7 @@ class SymconAlarmanlage extends IPSModule {
              if($ident == "AlertOnChange")
              {
                 $script = "\$id = IPS_GetObjectIDByIdent('AlertSpamTimer', $id);\n";
-                $script .= "if(GetValue($target) === false) IPS_SetEventActive(\$id, false);";         
-             }
-             else if($ident == "AlertOnTrue")
-             {
-                $script = "\$mailActive = GetValue(IPS_GetObjectIDByIdent('mailActive', ".$this->InstanceID."));\n";
-                $script .= "if(IPS_GetProperty(". $this->InstanceID .", 'mail') > 9999 && \$mailActive) {\n";
-                $script .= "\$sensorLinks = IPS_GetObjectIDByIdent('Sensors', ". IPS_GetParent($this->InstanceID) .");\n";
-                $script .= "foreach(IPS_GetChildrenIDs(\$sensorLinks) as \$c) {\n";
-                $script .= "\$sensorVal = GetValue(IPS_GetLink(\$c)['TargetID']);\n";
-                $script .= "if(\$sensorVal === true) {\n";
-                $script .= "\$sensor = \$c; break;\n";
-                $script .= "}\n";
-                $script .= "}\n";
-                $script .= "\$subject = \"Alarmanlage: \" . IPS_GetName(\$sensor) . \" (\" .  date(\"m.d.y\") . \" um \" . date(\"H:i:s\") .\")\";\n";
-                $script .= "SMTP_SendMail(IPS_GetProperty(". $this->InstanceID .", 'mail'), \$subject, \$subject);\n";
-                $script .= "}";    
+				$script .= "if(GetValue($target) === false) IPS_SetEventActive(\$id, false);";
              }
 			 IPS_SetEventScript($eid, $script);
 			 IPS_SetEventTrigger($eid, $type, $target);
