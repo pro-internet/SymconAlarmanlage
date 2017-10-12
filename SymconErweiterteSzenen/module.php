@@ -72,17 +72,19 @@ class SymconAlarmanlage extends IPSModule {
 						IPS_SetIdent($eid, "Sensor".$sensorID);
 						IPS_SetEventTrigger($eid, 1, $linkVariableID);
 						IPS_SetEventScript($eid, "SA_TriggerAlert(\$_IPS['TARGET'], \$_IPS['VARIABLE'], \$_IPS['VALUE']);\n
-												  
-												  if(GetValue($linkVariableID) !== false && GetValue(IPS_GetObjectIDByIdent(\"mailActive\", ".$this->InstanceID.")) === true)\n
-												  { 
-													\$subject = \"". IPS_GetName($this->InstanceID) .": \" . IPS_GetName($linkVariableID) . \" (\" .  date(\"m.d.y\") . \" um \" . date(\"H:i:s\") .\")\";\n
-													SMTP_SendMail(IPS_GetProperty(". $this->InstanceID .", 'mail'), \$subject, \$subject);\n
-												  }
+												  if(GetValue(IPS_GetObjectIDByIdent('Active', ". $this->InstanceID .")) !== false)
+												  {
+													if(GetValue($linkVariableID) !== false && GetValue(IPS_GetObjectIDByIdent(\"mailActive\", ".$this->InstanceID.")) === true)\n
+													{ 
+														\$subject = \"". IPS_GetName($this->InstanceID) .": \" . IPS_GetName($linkVariableID) . \" (\" .  date(\"m.d.y\") . \" um \" . date(\"H:i:s\") .\")\";\n
+														SMTP_SendMail(IPS_GetProperty(". $this->InstanceID .", 'mail'), \$subject, \$subject);\n
+													}
 
-												  if(GetValue($linkVariableID) !== false && GetValue(IPS_GetObjectIDByIdent(\"notificationActive\", ".$this->InstanceID.")) === true)\n
-												  { 
-													\$subject = \"". IPS_GetName($this->InstanceID) .": \" . IPS_GetName($linkVariableID) . \" (\" .  date(\"m.d.y\") . \" um \" . date(\"H:i:s\") .\")\";\n
-													WFC_PushNotification(IPS_GetProperty(". $this->InstanceID .", 'wfc'), 'Alarm', \$subject, '', 0);\n
+													if(GetValue($linkVariableID) !== false && GetValue(IPS_GetObjectIDByIdent(\"notificationActive\", ".$this->InstanceID.")) === true)\n
+													{ 
+														\$subject = \"". IPS_GetName($this->InstanceID) .": \" . IPS_GetName($linkVariableID) . \" (\" .  date(\"m.d.y\") . \" um \" . date(\"H:i:s\") .\")\";\n
+														WFC_PushNotification(IPS_GetProperty(". $this->InstanceID .", 'wfc'), 'Alarm', \$subject, '', 0);\n
+													}
 												  }
 												 ");
 						IPS_SetEventActive($eid, true);
