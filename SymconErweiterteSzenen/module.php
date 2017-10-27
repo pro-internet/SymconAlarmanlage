@@ -57,7 +57,7 @@ class SymconAlarmanlage extends IPSModule {
 
 	public function UpdateEvents() {
 		
-		$sensorsID = $this->CreateDummyByIdent(IPS_GetParent($this->InstanceID), "Sensors", "Sensors");
+		$sensorsID = $this->CreateDummyByIdent(IPS_GetParent($this->InstanceID), "Sensors", "Targets");
 		
 		//We want to listen for all changes on all sensorsID
 		foreach(IPS_GetChildrenIDs($sensorsID) as $sensorID) {
@@ -132,7 +132,7 @@ class SymconAlarmanlage extends IPSModule {
 
 	public function SetAlert(bool $Status, int $SourceID = null, int $SourceValue = null) {
 		
-		$targetsID = $this->CreateDummyByIdent(IPS_GetParent($this->InstanceID), "Targets", "Alert Target");
+		$targetsID = $this->CreateDummyByIdent(IPS_GetParent($this->InstanceID), "Targets", "Targets Alarm");
 		
 		//Lets notify all target devices
 		foreach(IPS_GetChildrenIDs($targetsID) as $targetID) {
