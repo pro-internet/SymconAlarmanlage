@@ -308,16 +308,16 @@ class SymconAlarmanlage extends IPSModule {
 			 IPS_SetParent($tid, $id);
 			 IPS_SetName($tid, $name);
 			 IPS_SetIdent($tid, $ident);
-			 $WebFrontInsIDs = $this->GetModuleIDByName("WebFront Configurator");
+			 #$WebFrontInsIDs = $this->GetModuleIDByName("WebFront Configurator");
 			 $currentName = IPS_GetName($this->InstanceID);
 			 $currentID = $this->InstanceID;
-			 $WebFrontID = $this->ReadPropertyInteger("wfc");
-			 $script = "@WFC_PushNotification($WebFrontID, 'Alarm', '', '', 0); ";
-			 IPS_SetEventScript($tid, $script);
 			 IPS_SetEventCyclic($tid, 0 /* Keine Datumsüberprüfung */, 0, 0, 2, 1 /* Sekündlich */ , 30 /* Alle 30 Sekunden */);
              IPS_SetEventActive($tid, false);
              IPS_SetHidden($tid, true);
 		 }
+		 $WebFrontID = $this->ReadPropertyInteger("wfc");
+		 $script = "@WFC_PushNotification($WebFrontID, 'Alarm', ' ', '', 0); ";
+		 IPS_SetEventScript($tid, $script);
 		 return $tid;
 	}
 
