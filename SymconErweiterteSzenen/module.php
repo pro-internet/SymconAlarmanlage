@@ -174,8 +174,9 @@ class SymconAlarmanlage extends IPSModule {
 		}
 		
 		$interval = GetValue(IPS_GetObjectIDByIdent('TimerInterval', $this->InstanceID));
+		$automatik = GetValue(IPS_GetObjectIDByIdent('Active', $this->InstanceID));
         //Send a notificatin message to the configured WebFront
-		if($Status && $interval != 0)
+		if($Status && $interval != 0 && $automatik)
 		{
 			IPS_LogMessage("Alarm", "Notifications enabled");
 			$tid = $this->CreateTimerByIdent($this->InstanceID, "AlertSpamTimer", "Alert Timer");
