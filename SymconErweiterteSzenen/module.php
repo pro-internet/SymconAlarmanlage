@@ -35,12 +35,12 @@ class SymconAlarmanlage extends IPSModule {
 			$this->CreateDummyByIdent(IPS_GetParent($this->InstanceID), "Sensors", "Targets", '', 20);
 			$this->CreateDummyByIdent(IPS_GetParent($this->InstanceID), "Targets", "Targets Alarm", "Warning", 30);
 			
-			$this->CreateVariableByIdent($this->InstanceID, "Active", "Automatik", 0, "Switch", true, '', -5);
+			$vid = $this->CreateVariableByIdent($this->InstanceID, "Active", "Automatik", 0, "Switch", true, '', -5);
+			$this->CreateTriggerByIdent($this->InstanceID, "ActiveOnChange", "Active.OnChange", $vid);
 			$this->EnableAction("Active");
 
 			$this->CreateIntervalProfile("Seconds");
-		$this->CreateVariableByIdent($this->InstanceID, "TimerInterval", "Benachrichtigung Interval", 1, "Seconds", true, "Clock", -1, 30 /*init val*/, $svs);
-			$this->EnableAction("Active");
+			$this->CreateVariableByIdent($this->InstanceID, "TimerInterval", "Benachrichtigung Interval", 1, "Seconds", true, "Clock", -1, 30 /*init val*/, $svs);
 
 			$vid = $this->CreateVariableByIdent($this->InstanceID, "Alert", "Alarm", 0, "Switch", true, '', -4);
 			$this->EnableAction("Alert");
@@ -193,11 +193,6 @@ class SymconAlarmanlage extends IPSModule {
 	public function SetActive(bool $Value) {
 		
 		SetValue($this->GetIDForIdent("Active"), $Value);
-		
-		if(!$Value) {
-			$this->SetAlert(false);
-		}
-		
     }
     
     private function NotificationTimer($value)
@@ -335,7 +330,11 @@ class SymconAlarmanlage extends IPSModule {
              {
                 $script = "\$id = IPS_GetObjectIDByIdent('AlertSpamTimer', $id);\n";
 				$script .= "if(GetValue($target) === false) IPS_SetEventActive(\$id, false);";
-             }
+			 }
+			 else if($ident = 'ActiveOnChange')
+			 {
+				$script = "if(!GetValue($target)) @SA_SetAlert($this->InstanceID, false);";
+			 }
 			 IPS_SetEventScript($eid, $script);
 			 IPS_SetEventTrigger($eid, $type, $target);
              IPS_SetEventActive($eid, true);
